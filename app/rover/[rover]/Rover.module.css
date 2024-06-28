@@ -1,0 +1,17 @@
+.gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px; /* Space between items */
+    justify-content: center; /* Center the items */
+  }
+  
+  .gallery > div {
+    flex: 1 1 300px; /* Grow, shrink, basis */
+    max-width: 300px; /* Max width of each item */
+    box-sizing: border-box; /* Include padding and border in width and height */
+  }
+  
+  .gallery p {
+    margin: 8px 0;
+    word-wrap: break-word; /* Ensure text wraps tightly */
+  }
