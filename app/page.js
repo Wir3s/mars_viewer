@@ -1,17 +1,36 @@
+import Image from "next/image";
 import Link from "next/link";
+import styles from "./HomePage.module.css";
 
-export default function Home() {
+export default function HomePage() {
   return (
     <div>
-      <h1>Select a Rover to View Latest Photos</h1>
-      <div>
+      <div className={styles.gallery}>
         <Link href="/rover/curiosity">
-          Curiosity
+          <div className={styles.roverCard}>
+            <Image
+              src="/images/rovers/curiosity_painting.webp"
+              alt="Curiosity Rover in the style of Van Gogh"
+              width={400}
+              height={400}
+            />
+            <div className={styles.overlay}>
+              <div className={styles.text}>Curiosity</div>
+            </div>
+          </div>
         </Link>
-      </div>
-      <div>
         <Link href="/rover/perseverance">
-          Perseverance
+          <div className={styles.roverCard}>
+            <Image
+              src="/images/rovers/perseverance_painting.webp"
+              alt="Perseverance Rover in the style of Gauguin"
+              width={400}
+              height={400}
+            />
+            <div className={styles.overlay}>
+              <div className={styles.text}>Perseverance</div>
+            </div>
+          </div>
         </Link>
       </div>
     </div>
