@@ -11,18 +11,36 @@ function Modal({ children, onClose }) {
         left: 0,
         right: 0,
         backgroundColor: "rgba(0, 0, 0, 0.8)",
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
       onClick={onClose}
     >
       <div
         style={{
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
+          background: "white",
+          padding: "20px",
+          borderRadius: "4px",
+          position: "relative",
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <button
+          onClick={onClose}
+          style={{
+            position: "absolute",
+            top: "10px",
+            right: "10px",
+            background: "none",
+            border: "none",
+            fontSize: "1.5rem",
+            cursor: "pointer",
+          }}
+        >
+          &times;
+        </button>
         {children}
       </div>
     </div>,
