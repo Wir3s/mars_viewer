@@ -15,7 +15,7 @@ export default function HomePage() {
           <div className={styles.roverCard}>
             <Image
               src="/images/rovers/curiosity_painting.webp"
-              alt="Curiosity Rover in the style of Van Gogh"
+              alt="Curiosity Rover in the style of Vincent Van Gogh"
               width={400}
               height={400}
             />
@@ -28,7 +28,7 @@ export default function HomePage() {
           <div className={styles.roverCard}>
             <Image
               src="/images/rovers/perseverance_painting.webp"
-              alt="Perseverance Rover in the style of Gauguin"
+              alt="Perseverance Rover in the style of Paul Gauguin"
               width={400}
               height={400}
             />
