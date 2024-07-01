@@ -1,8 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import styles from "./HomePage.module.css";
+import styles from "./Homepage.module.css";
 
-<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet"></link>
+<link
+  href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+  rel="stylesheet"
+></link>;
 
 export default function HomePage() {
   return (
