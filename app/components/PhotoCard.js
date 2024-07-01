@@ -13,13 +13,15 @@ export default function PhotoCard({ photo }) {
   return (
     <div>
       <div onClick={openModal} style={{ cursor: "pointer" }}>
-        <p>{`Sol: ${photo.sol}, Earth Date: ${photo.earth_date}, Camera: ${photo.camera.full_name}`}</p>
         <Image
           src={photo.img_src}
           alt={`Photo taken by ${photo.camera.full_name}`}
           width={150}
           height={150}
         />
+        <p>{`Sol: ${photo.sol}`}</p>
+        <p>{`Earth Date: ${photo.earth_date}`}</p>
+        <p>{`Camera: ${photo.camera.full_name}`}</p>
       </div>
       {isModalOpen && (
         <Modal onClose={closeModal}>
