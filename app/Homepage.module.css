@@ -64,4 +64,8 @@
     width: 100%;
     height: auto;
   }
+
+  .overlay {
+    opacity: 1; /* Ensure the overlay is always visible on mobile */
+  }
 }
