@@ -39,7 +39,7 @@
     background-color: rgba(0, 0, 0, 0.5);
   }
   
-  .roverCard:hover .overlay {
+  .roverCard:hover .overlay, .roverCard:active .overlay, .roverCard:focus .overlay {
     opacity: 1;
   }
   
