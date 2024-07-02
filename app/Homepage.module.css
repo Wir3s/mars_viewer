@@ -53,3 +53,15 @@
     transform: translate(-50%, -50%);
     text-align: center;
   }
+
+  /* Media queries for responsive design */
+@media (max-width: 768px) {
+  .gallery {
+    flex-direction: column;
+  }
+
+  .roverCard {
+    width: 100%;
+    height: auto;
+  }
+}
