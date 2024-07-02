@@ -4,7 +4,7 @@
     display: flex;
     justify-content: center;
     gap: 20px;
-    margin-top: 16vh; 
+    margin-top: 10vh; 
   }
 
   
@@ -13,6 +13,10 @@
     width: 400px;
     height: 400px;
     overflow: hidden;
+    border: 10px solid #3d2104; /* Frame color */
+    padding: 5px; /* Space between the image and the frame */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional shadow for depth */
+    background-color: #fff; /* Background color of the frame */
   }
   
   .roverCard img {
@@ -54,6 +58,12 @@
     text-align: center;
   }
 
+  .title {
+    text-align: center;
+    font-size: 36px;
+    margin-top: 20px;
+  }
+
   /* Media queries for responsive design */
 @media (max-width: 768px) {
   .gallery {
@@ -66,6 +76,22 @@
   }
 
   .overlay {
-    opacity: 1; /* Ensure the overlay is always visible on mobile */
+    opacity: 0.8; /* Make the overlay slightly visible on mobile */
+  }
+
+  .roverCard:hover .overlay, .roverCard:active .overlay {
+    opacity: 1; /* Fully show the overlay on hover/tap */
+  }
+
+  .text {
+    opacity: 0.8; /* Make the text slightly visible on mobile */
+  }
+
+  .roverCard:hover .text, .roverCard:active .text {
+    opacity: 1; /* Fully show the text on hover/tap */
+  }
+
+  .title {
+    font-size: 28px;
   }
 }

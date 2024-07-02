@@ -10,6 +10,7 @@ import styles from "./Homepage.module.css";
 export default function HomePage() {
   return (
     <div>
+      <h1 className={styles.title}>Choose Your Rover</h1>
       <div className={styles.gallery}>
         <Link href="/rover/curiosity">
           <div className={styles.roverCard}>
