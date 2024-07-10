@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { getRoverData } from "../../../actions/getRoverData";
+import { getRoverData } from "../../actions/getRoverData";
 import PhotoGallery from "./PhotoGallery";
 import CameraSelector from "./CameraSelector";
 
