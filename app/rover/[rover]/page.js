@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { getRoverData } from "../../../actions/getRoverData";
 import PhotoCard from "../../components/PhotoCard";
 import Link from "next/link";
