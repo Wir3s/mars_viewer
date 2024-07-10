@@ -1,10 +1,11 @@
-import { Suspense } from "react";
+import { getRoverData } from "../../../actions/getRoverData";
 import Link from "next/link";
-import PhotoFetcher from "../../components/PhotoFetcher";
+import ClientComponent from "../../components/ClientComponent";
 import styles from "./Rover.module.css";
 
 export default async function Rover({ params }) {
   const { rover } = params;
+  const initialPhotos = await getRoverData(rover, "");
 
   return (
     <div>
@@ -15,10 +16,8 @@ export default async function Rover({ params }) {
         <h1 className={styles.headerTitle}>
           {rover.charAt(0).toUpperCase() + rover.slice(1)} Latest Photos
         </h1>
-        <Suspense fallback={<p>Loading...</p>}>
-          <PhotoFetcher rover={rover} />
-        </Suspense>
       </div>
+      <ClientComponent initialPhotos={initialPhotos} rover={rover} />
     </div>
   );
 }
