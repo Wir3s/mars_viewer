@@ -37,7 +37,7 @@ export async function getRoverData(rover) {
       data = await res.json();
     }
 
-    return data.photos.slice(0, 10);
+    return data.photos.slice(0, 25);
   } catch (error) {
     console.error("Error in getRoverData:", error);
     throw error;
