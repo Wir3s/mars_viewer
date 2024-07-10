@@ -1,12 +1,20 @@
-import { Suspense } from "react";
 import { getRoverData } from "../../../actions/getRoverData";
 import PhotoCard from "../../components/PhotoCard";
+import CameraSelector from "../../components/CameraSelector";
 import Link from "next/link";
 import styles from "./Rover.module.css";
+import { useState } from "react";
 
-export default async function Rover({ params }) {
+export default function Rover({ params }) {
   const { rover } = params;
-  const photos = await getRoverData(rover);
+  const [photos, setPhotos] = useState([]);
+  const [camera, setCamera] = useState("");
+
+  async function handleCameraChange(selectedCamera) {
+    setCamera(selectedCamera);
+    const data = await getRoverData(rover, selectedCamera);
+    setPhotos(data);
+  }
 
   return (
     <div>
@@ -17,10 +25,9 @@ export default async function Rover({ params }) {
         <h1 className={styles.headerTitle}>
           {rover.charAt(0).toUpperCase() + rover.slice(1)} Latest Photos
         </h1>
+        <CameraSelector rover={rover} onCameraChange={handleCameraChange} />
       </div>
-      <Suspense fallback={<p>Loading...</p>}>
-        <PhotoGallery photos={photos} />
-      </Suspense>
+      <PhotoGallery photos={photos} />
     </div>
   );
 }
