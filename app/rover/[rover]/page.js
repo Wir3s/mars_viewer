@@ -1,11 +1,12 @@
+import { Suspense } from "react";
 import { getRoverData } from "../../../actions/getRoverData";
+import PhotoCard from "../../components/PhotoCard";
 import Link from "next/link";
-import ClientComponent from "../../components/ClientComponent";
 import styles from "./Rover.module.css";
 
 export default async function Rover({ params }) {
   const { rover } = params;
-  const initialPhotos = await getRoverData(rover, "");
+  const photos = await getRoverData(rover);
 
   return (
     <div>
@@ -17,7 +18,19 @@ export default async function Rover({ params }) {
           {rover.charAt(0).toUpperCase() + rover.slice(1)} Latest Photos
         </h1>
       </div>
-      <ClientComponent initialPhotos={initialPhotos} rover={rover} />
+      <Suspense fallback={<p>Loading...</p>}>
+        <PhotoGallery photos={photos} />
+      </Suspense>
+    </div>
+  );
+}
+
+function PhotoGallery({ photos }) {
+  return (
+    <div className={styles.gallery}>
+      {photos.map((photo) => (
+        <PhotoCard key={photo.id} photo={photo} />
+      ))}
     </div>
   );
 }
