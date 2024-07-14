@@ -60,7 +60,7 @@ export async function getRoverData(rover) {
     }
 
     console.log(`Returning ${data.photos.length} photos`);
-    return data.photos.slice(0, 50);
+    return data.photos.slice(0, 20);
   } catch (error) {
     console.error("Error in getRoverData:", error);
     throw error;
