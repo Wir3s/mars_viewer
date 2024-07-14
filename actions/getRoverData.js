@@ -7,7 +7,11 @@ export async function getRoverData(rover) {
   const manifestUrl = `https://api.nasa.gov/mars-photos/api/v1/manifests/${rover}?api_key=${apiKey}`;
 
   try {
-    const manifestRes = await fetch(manifestUrl);
+    const manifestRes = await fetch(manifestUrl, {
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+      },
+    });
     if (!manifestRes.ok) {
       console.error(
         `Failed to fetch manifest data: ${manifestRes.status} ${manifestRes.statusText}`
@@ -21,13 +25,27 @@ export async function getRoverData(rover) {
     const latestSol = manifestData.photo_manifest.max_sol;
     const latestEarthDate = manifestData.photo_manifest.max_date;
 
+    console.log(
+      `Latest Sol: ${latestSol}, Latest Earth Date: ${latestEarthDate}`
+    );
+
     let url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?sol=${latestSol}&api_key=${apiKey}`;
-    let res = await fetch(url);
+    let res = await fetch(url, {
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+      },
+    });
     let data = await res.json();
+
+    console.log(`Fetched ${data.photos.length} photos for Sol: ${latestSol}`);
 
     if (!res.ok || data.photos.length === 0) {
       url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?earth_date=${latestEarthDate}&api_key=${apiKey}`;
-      res = await fetch(url);
+      res = await fetch(url, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+      });
       if (!res.ok) {
         console.error(
           `Failed to fetch photo data: ${res.status} ${res.statusText}`
@@ -35,9 +53,14 @@ export async function getRoverData(rover) {
         throw new Error(`Failed to fetch photo data: ${res.statusText}`);
       }
       data = await res.json();
+
+      console.log(
+        `Fetched ${data.photos.length} photos for Earth Date: ${latestEarthDate}`
+      );
     }
 
-    return data.photos.slice(0, 25);
+    console.log(`Returning ${data.photos.length} photos`);
+    return data.photos.slice(0, 50);
   } catch (error) {
     console.error("Error in getRoverData:", error);
     throw error;
