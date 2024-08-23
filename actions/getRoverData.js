@@ -27,6 +27,7 @@ export async function getRoverData(rover) {
     console.log(
       `Latest Sol: ${latestSol}, Latest Earth Date: ${latestEarthDate} for rover ${rover}`
     );
+    console.log(`Manifest Data for Curiosity:`, manifestData);
 
     let photos = [];
     let sol = latestSol;
