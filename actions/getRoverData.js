@@ -27,74 +27,48 @@ export async function getRoverData(rover) {
     console.log(
       `Latest Sol: ${latestSol}, Latest Earth Date: ${latestEarthDate} for rover ${rover}`
     );
-    console.log(`Manifest Data for Curiosity:`, manifestData);
+    console.log(`Manifest Data for ${rover}:`, manifestData);
 
     let photos = [];
-    let sol = latestSol;
-    let retries = 3;
 
-    // Fetch photos incrementally from the latest sol
-    while (photos.length < 50 && sol >= 0 && retries > 0) {
+    // Create an array of sol numbers to fetch concurrently
+    const solNumbers = Array.from({ length: Math.min(50, latestSol + 1) }, (_, i) => latestSol - i);
+
+    // Use Promise.all to fetch photos from multiple sols concurrently
+    const requests = solNumbers.map(async (sol) => {
+      const url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?sol=${sol}&api_key=${apiKey}&page=1`;
+      console.log(`Fetching photos from ${url}`);
+
       try {
-        const url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?sol=${sol}&api_key=${apiKey}&page=1`;
-        console.log(`Fetching photos from ${url}`);
         const res = await fetch(url, {
           headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
         });
-        const data = await res.json();
 
-        if (res.ok && data.photos.length > 0) {
-          photos = photos.concat(data.photos);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.photos.length > 0) {
+            return data.photos;
+          } else {
+            console.warn(`No photos found for sol ${sol}`);
+            return [];
+          }
         } else {
-          retries--;
-          console.warn(
-            `No photos found for sol ${sol}, retries left: ${retries}`
+          console.error(
+            `Failed to fetch photos for sol ${sol}: ${res.status} ${res.statusText}`
           );
+          return [];
         }
       } catch (error) {
-        retries--;
-        console.error(
-          `Error fetching data for sol ${sol}, retries left: ${retries}`,
-          error
-        );
+        console.error(`Error fetching data for sol ${sol}:`, error);
+        return [];
       }
+    });
 
-      sol--;
-    }
+    // Wait for all requests to complete
+    const results = await Promise.all(requests);
 
-    // If fewer than 50 photos, use pagination with the latest Earth date
-    if (photos.length < 50) {
-      let page = 1;
-      retries = 3;
-
-      while (photos.length < 50 && retries > 0) {
-        try {
-          const url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?earth_date=${latestEarthDate}&api_key=${apiKey}&page=${page}`;
-          console.log(`Fetching photos from ${url}`);
-          const res = await fetch(url, {
-            headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
-          });
-          const data = await res.json();
-
-          if (res.ok && data.photos.length > 0) {
-            photos = photos.concat(data.photos);
-          } else {
-            retries--;
-            console.warn(
-              `No photos found for earth date ${latestEarthDate}, page ${page}, retries left: ${retries}`
-            );
-          }
-        } catch (error) {
-          retries--;
-          console.error(
-            `Error fetching data for earth date ${latestEarthDate}, page ${page}, retries left: ${retries}`,
-            error
-          );
-        }
-
-        page++;
-      }
-    }
+    // Flatten the results into a single array of photos
+    photos = results.flat();
 
     console.log(`Returning ${photos.length} photos for rover ${rover}`);
     return photos.slice(0, 50);

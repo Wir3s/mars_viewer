@@ -18,7 +18,7 @@ export default async function Rover({ params }) {
           {rover.charAt(0).toUpperCase() + rover.slice(1)} Latest Photos
         </h1>
       </div>
-      <Suspense fallback={<p>Loading...</p>}>
+      <Suspense fallback={<p>Loading latest photos...</p>}>
         <PhotoGallery photos={photos} />
       </Suspense>
     </div>

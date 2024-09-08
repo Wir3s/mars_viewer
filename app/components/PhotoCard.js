@@ -18,6 +18,7 @@ export default function PhotoCard({ photo }) {
           alt={`Photo taken by ${photo.camera.full_name}`}
           width={150}
           height={150}
+          loading="lazy"
         />
         <p>{`Sol: ${photo.sol}`}</p>
         <p>{`Earth Date: ${photo.earth_date}`}</p>
@@ -30,6 +31,7 @@ export default function PhotoCard({ photo }) {
             alt={`Photo by ${photo.rover.name}`}
             height={500}
             width={500}
+            loading="lazy"
           />
           <div style={{ color: "black", textAlign: "center" }}>
             <p>ID: {photo.id}</p>
