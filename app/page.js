@@ -1,13 +1,18 @@
+import { useEffect } from "react";
+import { useRouter } from "next/router";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./Homepage.module.css";
 
-<link
-  href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
-  rel="stylesheet"
-></link>;
-
 export default function HomePage() {
+  const router = useRouter();
+
+  // Prefetch the rover pages when the homepage loads
+  useEffect(() => {
+    router.prefetch("/rover/curiosity");
+    router.prefetch("/rover/perseverance");
+  }, []);
+
   return (
     <div>
       <h1 className={styles.title}>Choose Your Rover</h1>
@@ -19,6 +24,7 @@ export default function HomePage() {
               alt="Curiosity Rover in the style of Vincent Van Gogh"
               width={400}
               height={400}
+              loading="lazy"
             />
             <div className={styles.overlay}>
               <div className={styles.text}>Curiosity</div>
@@ -32,6 +38,7 @@ export default function HomePage() {
               alt="Perseverance Rover in the style of Paul Gauguin"
               width={400}
               height={400}
+              loading="lazy"
             />
             <div className={styles.overlay}>
               <div className={styles.text}>Perseverance</div>
