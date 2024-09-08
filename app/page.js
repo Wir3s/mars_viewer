@@ -1,7 +1,7 @@
-"use client"
+"use client";  
 
 import { useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./Homepage.module.css";
@@ -23,7 +23,7 @@ export default function HomePage() {
           <div className={styles.roverCard}>
             <Image
               src="/images/rovers/curiosity_painting.webp"
-              alt="Curiosity Rover in the style of Vincent Van Gogh"
+              alt="Curiosity Rover"
               width={400}
               height={400}
               loading="lazy"
@@ -37,7 +37,7 @@ export default function HomePage() {
           <div className={styles.roverCard}>
             <Image
               src="/images/rovers/perseverance_painting.webp"
-              alt="Perseverance Rover in the style of Paul Gauguin"
+              alt="Perseverance Rover"
               width={400}
               height={400}
               loading="lazy"
