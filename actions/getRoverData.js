@@ -4,74 +4,35 @@ export async function getRoverData(rover) {
     throw new Error("API key is not defined");
   }
 
-  const manifestUrl = `https://api.nasa.gov/mars-photos/api/v1/manifests/${rover}?api_key=${apiKey}`;
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split("T")[0];
+
+  // Build the URL to fetch the most recent photos based on today's date
+  const url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?earth_date=${today}&api_key=${apiKey}&page=1`;
 
   try {
-    console.log(`Fetching manifest data for ${rover} from ${manifestUrl}`);
-    const manifestRes = await fetch(manifestUrl, {
+    console.log(`Fetching recent photos for ${rover} from ${url}`);
+    const res = await fetch(url, {
       headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
     });
-    if (!manifestRes.ok) {
+
+    if (!res.ok) {
       console.error(
-        `Failed to fetch manifest data: ${manifestRes.status} ${manifestRes.statusText}`
+        `Failed to fetch recent photos: ${res.status} ${res.statusText}`
       );
-      throw new Error(
-        `Failed to fetch manifest data: ${manifestRes.statusText}`
-      );
+      throw new Error(`Failed to fetch recent photos: ${res.statusText}`);
     }
 
-    const manifestData = await manifestRes.json();
-    const latestSol = manifestData.photo_manifest.max_sol;
-    const latestEarthDate = manifestData.photo_manifest.max_date;
+    const data = await res.json();
 
-    console.log(
-      `Latest Sol: ${latestSol}, Latest Earth Date: ${latestEarthDate} for rover ${rover}`
-    );
-    console.log(`Manifest Data for ${rover}:`, manifestData);
+    // If no photos were found for today, you can implement fallback logic (e.g., try previous days)
+    if (data.photos.length === 0) {
+      console.warn(`No photos found for ${today}, trying previous dates...`);
+      // Optionally, you can implement logic to fetch photos from earlier dates here
+    }
 
-    let photos = [];
-
-    // Create an array of sol numbers to fetch concurrently
-    const solNumbers = Array.from({ length: Math.min(50, latestSol + 1) }, (_, i) => latestSol - i);
-
-    // Use Promise.all to fetch photos from multiple sols concurrently
-    const requests = solNumbers.map(async (sol) => {
-      const url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?sol=${sol}&api_key=${apiKey}&page=1`;
-      console.log(`Fetching photos from ${url}`);
-
-      try {
-        const res = await fetch(url, {
-          headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.photos.length > 0) {
-            return data.photos;
-          } else {
-            console.warn(`No photos found for sol ${sol}`);
-            return [];
-          }
-        } else {
-          console.error(
-            `Failed to fetch photos for sol ${sol}: ${res.status} ${res.statusText}`
-          );
-          return [];
-        }
-      } catch (error) {
-        console.error(`Error fetching data for sol ${sol}:`, error);
-        return [];
-      }
-    });
-
-    // Wait for all requests to complete
-    const results = await Promise.all(requests);
-
-    // Flatten the results into a single array of photos
-    photos = results.flat();
-
-    console.log(`Returning ${photos.length} photos for rover ${rover}`);
-    return photos.slice(0, 50);
+    console.log(`Returning ${data.photos.length} photos for rover ${rover}`);
+    return data.photos.slice(0, 50); // Return the 50 most recent photos
   } catch (error) {
     console.error(`Error in getRoverData for rover ${rover}:`, error);
     throw error;
