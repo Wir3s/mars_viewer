@@ -38,7 +38,7 @@ export async function getRoverData(rover) {
 
   try {
     let photos = [];
-    let attempts = rover === "Curiosity" ? 200 : 7; // Try 30 days for Curiosity, 7 for Perseverance
+    let attempts = rover === "Curiosity" ? 400 : 7; // Try 30 days for Curiosity, 7 for Perseverance
     let currentDate = new Date();
 
     while (attempts > 0 && photos.length === 0) {
