@@ -51,7 +51,6 @@ export async function getRoverData(rover) {
           )}, trying previous day...`
         );
         currentDate.setDate(currentDate.getDate() - 1); // Go back one day
-        await delay(500); // Add delay to avoid rate limiting
       }
 
       attempts--;
