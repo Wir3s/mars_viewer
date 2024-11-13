@@ -1,15 +1,51 @@
-// Utility function for introducing a delay
+// Step 1: Utility function for introducing a delay between API requests
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Helper function to format date as YYYY-MM-DD
+// Step 2: Helper function to format date as YYYY-MM-DD
 const formatDate = (date) => date.toISOString().split("T")[0];
 
-// Function to get photos for a given Earth date
-const getPhotosForDate = async (rover, date, apiKey) => {
-  const formattedDate = formatDate(date);
-  const url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?earth_date=${formattedDate}&api_key=${apiKey}&page=1`;
+// Step 3: Fetch manifest data for a given rover
+const getManifestData = async (rover, apiKey) => {
+  const url = `https://api.nasa.gov/mars-photos/api/v1/manifests/${rover}?api_key=${apiKey}`;
 
-  console.log(`Fetching photos for ${rover} on ${formattedDate} from ${url}`);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(
+        `Failed to fetch manifest data: ${res.status} ${res.statusText}`
+      );
+      return null;
+    }
+
+    const data = await res.json();
+    console.log(`Manifest data for ${rover}:`, JSON.stringify(data, null, 2));
+    return data.photo_manifest;
+  } catch (error) {
+    console.error(`Error fetching manifest data for ${rover}:`, error);
+    return null;
+  }
+};
+
+// Step 4: Extract available sols from the manifest data
+const getAvailableSols = (manifestData) => {
+  if (!manifestData || !manifestData.photos) {
+    console.error("No manifest data available to extract sols.");
+    return [];
+  }
+
+  // Extract sols that have at least one photo
+  return manifestData.photos
+    .filter((photo) => photo.total_photos > 0)
+    .map((photo) => photo.sol);
+};
+
+// Step 5: Fetch photos for a given sol and camera
+const getPhotosForSolAndCamera = async (rover, sol, camera, apiKey) => {
+  const url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?sol=${sol}&camera=${camera}&api_key=${apiKey}`;
+
+  console.log(
+    `Fetching photos for ${rover} on sol ${sol} with camera ${camera} from ${url}`
+  );
 
   try {
     const res = await fetch(url, {
@@ -17,87 +53,74 @@ const getPhotosForDate = async (rover, date, apiKey) => {
     });
 
     if (!res.ok) {
-      console.error(`Failed to fetch photos: ${res.status} ${res.statusText}`);
+      console.error(
+        `Failed to fetch photos for ${camera} camera: ${res.status} ${res.statusText}`
+      );
       return [];
     }
 
     const data = await res.json();
-    console.log(
-      `Response for ${formattedDate}:`,
-      JSON.stringify(data, null, 2)
+    return data.photos || [];
+  } catch (error) {
+    console.error(
+      `Error fetching photos for sol ${sol} with camera ${camera}:`,
+      error
     );
-
-    return data.photos || [];
-  } catch (error) {
-    console.error(`Error fetching photos for ${formattedDate}:`, error);
     return [];
   }
 };
 
-// Function to get photos for a given Martian sol
-const getPhotosForSol = async (rover, sol, apiKey) => {
-  const url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?sol=${sol}&api_key=${apiKey}&page=1`;
-
-  console.log(`Fetching photos for ${rover} on sol ${sol} from ${url}`);
-
-  try {
-    const res = await fetch(url, {
-      headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
-    });
-
-    if (!res.ok) {
-      console.error(`Failed to fetch photos: ${res.status} ${res.statusText}`);
-      return [];
-    }
-
-    const data = await res.json();
-    return data.photos || [];
-  } catch (error) {
-    console.error(`Error fetching photos for sol ${sol}:`, error);
-    return [];
-  }
-};
-
-// Main function to get rover data
+// Step 6: Main function to get rover data
 export async function getRoverData(rover) {
   const apiKey = process.env.NASA_API_KEY;
   if (!apiKey) {
     throw new Error("API key is not defined");
   }
 
+  // Fetch manifest data for the rover
+  const manifestData = await getManifestData(rover, apiKey);
+  if (!manifestData) {
+    throw new Error("Could not retrieve manifest data.");
+  }
+
+  // Extract available sols with photos
+  const availableSols = getAvailableSols(manifestData);
+  if (availableSols.length === 0) {
+    console.error("No available sols with photos for the rover.");
+    return [];
+  }
+
+  console.log(`Available sols for ${rover}: ${availableSols.join(", ")}`);
+
+  // Iterate over available sols and fetch photos
   let photos = [];
-  let attempts = rover === "Curiosity" ? 60 : 7; // Try more recent days for Curiosity
-  let currentDate = new Date();
+  const cameras = ["FHAZ", "RHAZ", "MAST", "CHEMCAM", "MAHLI", "NAVCAM"];
 
-  // Try getting photos for recent Earth dates
-  while (attempts > 0 && photos.length === 0) {
-    photos = await getPhotosForDate(rover, currentDate, apiKey);
+  for (let sol of availableSols) {
+    if (photos.length > 0) {
+      break; // Stop once we have some photos
+    }
 
-    if (photos.length === 0) {
-      console.warn(
-        `No photos found for ${formatDate(currentDate)}, trying previous day...`
+    for (let camera of cameras) {
+      const cameraPhotos = await getPhotosForSolAndCamera(
+        rover,
+        sol,
+        camera,
+        apiKey
       );
-      currentDate.setDate(currentDate.getDate() - 1);
-      await delay(500); // Delay to avoid rate limiting
-    }
+      if (cameraPhotos.length > 0) {
+        photos = photos.concat(cameraPhotos);
+        console.log(
+          `Found ${cameraPhotos.length} photos for sol ${sol} using camera ${camera}`
+        );
+      }
 
-    attempts--;
-  }
-
-  // If no photos found, fallback to Martian sols
-  if (photos.length === 0) {
-    console.log("No photos found with Earth date, trying sols...");
-    let sol = 3000; // Adjust this sol value to get more recent sols if needed
-    while (attempts > 0 && photos.length === 0) {
-      photos = await getPhotosForSol(rover, sol, apiKey);
-      sol--;
-      attempts--;
-      await delay(500);
+      await delay(500); // Delay between requests to avoid rate limiting
     }
   }
 
   if (photos.length === 0) {
-    console.error(`No photos found for the given dates and sols.`);
+    console.error(`No photos found for the available sols and cameras.`);
     return [];
   }
 
