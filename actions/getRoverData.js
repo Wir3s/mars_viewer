@@ -4,6 +4,9 @@ export async function getRoverData(rover) {
     throw new Error("API key is not defined");
   }
 
+  // Utility function for introducing a delay
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
   // Helper function to format date as YYYY-MM-DD
   const formatDate = (date) => {
     return date.toISOString().split("T")[0];
@@ -38,7 +41,7 @@ export async function getRoverData(rover) {
 
   try {
     let photos = [];
-    let attempts = rover === "Curiosity" ? 60 : 7; // Adjust number of days to try backtracking
+    let attempts = rover === "Curiosity" ? 60 : 7; // Try 60 days for Curiosity, 7 for Perseverance
     let currentDate = new Date();
 
     while (attempts > 0 && photos.length === 0) {
@@ -51,13 +54,16 @@ export async function getRoverData(rover) {
           )}, trying previous day...`
         );
         currentDate.setDate(currentDate.getDate() - 1); // Go back one day
+        await delay(500); // Delay to avoid rate limits (500ms delay between attempts)
       }
 
       attempts--;
     }
 
     if (photos.length === 0) {
-      console.error(`No photos found for the last 7 days.`);
+      console.error(
+        `No photos found for the last ${rover === "Curiosity" ? 60 : 7} days.`
+      );
       return [];
     }
 
