@@ -38,7 +38,7 @@ export async function getRoverData(rover) {
 
   try {
     let photos = [];
-    let attempts = rover === "Curiosity" ? 400 : 7; // Try 30 days for Curiosity, 7 for Perseverance
+    let attempts = rover === "Curiosity" ? 60 : 7; // Adjust number of days to try backtracking
     let currentDate = new Date();
 
     while (attempts > 0 && photos.length === 0) {
@@ -51,6 +51,7 @@ export async function getRoverData(rover) {
           )}, trying previous day...`
         );
         currentDate.setDate(currentDate.getDate() - 1); // Go back one day
+        await delay(500); // Add delay to avoid rate limiting
       }
 
       attempts--;
