@@ -4,25 +4,47 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // Step 2: Helper function to format date as YYYY-MM-DD
 const formatDate = (date) => date.toISOString().split("T")[0];
 
-// Step 3: Fetch manifest data for a given rover
-const getManifestData = async (rover, apiKey) => {
+// Step 3: Fetch manifest data for a given rover with retry mechanism
+const getManifestData = async (rover, apiKey, retries = 3) => {
   const url = `https://api.nasa.gov/mars-photos/api/v1/manifests/${rover}?api_key=${apiKey}`;
 
-  try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.error(
-        `Failed to fetch manifest data: ${res.status} ${res.statusText}`
-      );
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        console.error(
+          `Failed to fetch manifest data: ${res.status} ${res.statusText}`
+        );
+
+        // Retry if we get a 500 error
+        if (res.status === 500 && attempt < retries - 1) {
+          console.log(
+            `Retrying manifest fetch for ${rover} (attempt ${attempt + 1})...`
+          );
+          await delay(1000); // Wait for 1 second before retrying
+          continue;
+        }
+
+        return null; // If it's not a 500 error or max retries reached, return null
+      }
+
+      const data = await res.json();
+      console.log(`Manifest data for ${rover}:`, JSON.stringify(data, null, 2));
+      return data.photo_manifest;
+    } catch (error) {
+      console.error(`Error fetching manifest data for ${rover}:`, error);
+
+      // Retry on network errors
+      if (attempt < retries - 1) {
+        console.log(
+          `Retrying manifest fetch for ${rover} (attempt ${attempt + 1})...`
+        );
+        await delay(1000); // Wait for 1 second before retrying
+        continue;
+      }
+
       return null;
     }
-
-    const data = await res.json();
-    console.log(`Manifest data for ${rover}:`, JSON.stringify(data, null, 2));
-    return data.photo_manifest;
-  } catch (error) {
-    console.error(`Error fetching manifest data for ${rover}:`, error);
-    return null;
   }
 };
 
@@ -70,21 +92,25 @@ const getPhotosForSolAndCamera = async (rover, sol, camera, apiKey) => {
   }
 };
 
-// Step 6: Main function to get rover data
+// Step 6: Main function to get rover data with fallback mechanism
 export async function getRoverData(rover) {
   const apiKey = process.env.NASA_API_KEY;
   if (!apiKey) {
     throw new Error("API key is not defined");
   }
 
-  // Fetch manifest data for the rover
+  // Step 1: Get manifest data (retry mechanism in place)
+  let availableSols = [];
   const manifestData = await getManifestData(rover, apiKey);
+
   if (!manifestData) {
-    throw new Error("Could not retrieve manifest data.");
+    console.warn("Could not retrieve manifest data, using fallback sols...");
+    // Provide a fallback list of sols in case manifest retrieval fails
+    availableSols = [3000, 2999, 2998, 2997]; // Replace with sensible fallback sols
+  } else {
+    availableSols = getAvailableSols(manifestData);
   }
 
-  // Extract available sols with photos
-  const availableSols = getAvailableSols(manifestData);
   if (availableSols.length === 0) {
     console.error("No available sols with photos for the rover.");
     return [];
@@ -92,7 +118,7 @@ export async function getRoverData(rover) {
 
   console.log(`Available sols for ${rover}: ${availableSols.join(", ")}`);
 
-  // Iterate over available sols and fetch photos
+  // Step 2: Iterate over available sols and fetch photos
   let photos = [];
   const cameras = ["FHAZ", "RHAZ", "MAST", "CHEMCAM", "MAHLI", "NAVCAM"];
 
