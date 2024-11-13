@@ -4,13 +4,26 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // Step 2: Helper function to format date as YYYY-MM-DD
 const formatDate = (date) => date.toISOString().split("T")[0];
 
-// Step 3: Fetch manifest data for a given rover with retry mechanism
-const getManifestData = async (rover, apiKey, retries = 3) => {
+// Step 3: Fetch manifest data for a given rover with retry mechanism and timeout control
+const getManifestData = async (rover, apiKey, retries = 3, timeout = 10000) => {
   const url = `https://api.nasa.gov/mars-photos/api/v1/manifests/${rover}?api_key=${apiKey}`;
 
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
-      const res = await fetch(url);
+      console.log(
+        `Attempt ${attempt + 1}: Fetching manifest data for rover: ${rover}`
+      );
+
+      // Implementing AbortController to handle timeouts
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+
+      const res = await fetch(url, {
+        signal: controller.signal,
+      });
+
+      clearTimeout(id);
+
       if (!res.ok) {
         console.error(
           `Failed to fetch manifest data: ${res.status} ${res.statusText}`
@@ -29,12 +42,16 @@ const getManifestData = async (rover, apiKey, retries = 3) => {
       }
 
       const data = await res.json();
-      console.log(`Manifest data for ${rover}:`, JSON.stringify(data, null, 2));
+      console.log(`Manifest data for ${rover} successfully retrieved.`);
       return data.photo_manifest;
     } catch (error) {
-      console.error(`Error fetching manifest data for ${rover}:`, error);
+      if (error.name === "AbortError") {
+        console.error(`Manifest fetch timed out for rover: ${rover}`);
+      } else {
+        console.error(`Error fetching manifest data for ${rover}:`, error);
+      }
 
-      // Retry on network errors
+      // Retry on network errors or timeouts
       if (attempt < retries - 1) {
         console.log(
           `Retrying manifest fetch for ${rover} (attempt ${attempt + 1})...`
