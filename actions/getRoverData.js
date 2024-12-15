@@ -4,73 +4,79 @@ export async function getRoverData(rover) {
     throw new Error("API key is not defined");
   }
 
-  // Utility function for introducing a delay
-  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const normalizedRover = rover.toLowerCase();
 
-  // Helper function to format date as YYYY-MM-DD
-  const formatDate = (date) => {
-    return date.toISOString().split("T")[0];
-  };
+  // Specific camera filtering (sometimes helps)
+  const cameras = normalizedRover === 'curiosity' 
+    ? ['MAST', 'NAVCAM', 'FHAZ', 'RHAZ'] 
+    : [];
 
-  // Try to get photos for today or the last 7 days
-  const getPhotosForDate = async (date) => {
-    const formattedDate = formatDate(date);
-    const url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?earth_date=${formattedDate}&api_key=${apiKey}&page=1`;
+  const getPhotosForDate = async (date, cameraFilter = null) => {
+    const formattedDate = date.toISOString().split("T")[0];
+    
+    let url = `https://api.nasa.gov/mars-photos/api/v1/rovers/${normalizedRover}/photos?earth_date=${formattedDate}&api_key=${apiKey}`;
+    
+    // Add camera filter if specified
+    if (cameraFilter) {
+      url += `&camera=${cameraFilter}`;
+    }
 
-    console.log(`Fetching photos for ${rover} on ${formattedDate} from ${url}`);
+    console.log(`Attempting to fetch from: ${url}`);
 
     try {
       const res = await fetch(url, {
-        headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
+        headers: { 
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Accept": "application/json"
+        }
       });
 
       if (!res.ok) {
-        console.error(
-          `Failed to fetch photos: ${res.status} ${res.statusText}`
-        );
+        console.error(`HTTP Error: ${res.status} ${res.statusText}`);
         return [];
       }
 
       const data = await res.json();
+      
+      console.log(`Photos found for ${formattedDate} (${cameraFilter || 'all cameras'}):`, data.photos.length);
+
       return data.photos || [];
     } catch (error) {
-      console.error(`Error fetching photos for ${formattedDate}:`, error);
+      console.error(`Fetch error for ${formattedDate}:`, error);
       return [];
     }
   };
 
   try {
     let photos = [];
-    let attempts = rover === "Curiosity" ? 60 : 7; // Try 60 days for Curiosity, 7 for Perseverance
     let currentDate = new Date();
+    let attempts = 60; // Extended attempts
+    let cameraIndex = 0;
 
     while (attempts > 0 && photos.length === 0) {
+      // Try without camera filter first
       photos = await getPhotosForDate(currentDate);
 
-      if (photos.length === 0) {
-        console.warn(
-          `No photos found for ${formatDate(
-            currentDate
-          )}, trying previous day...`
-        );
-        currentDate.setDate(currentDate.getDate() - 1); // Go back one day
-        await delay(500); // Delay to avoid rate limits (500ms delay between attempts)
+      // If no photos, try with specific cameras for Curiosity
+      if (photos.length === 0 && cameras.length > 0 && cameraIndex < cameras.length) {
+        photos = await getPhotosForDate(currentDate, cameras[cameraIndex]);
+        cameraIndex++;
       }
 
-      attempts--;
+      if (photos.length === 0) {
+        currentDate.setDate(currentDate.getDate() - 1);
+        attempts--;
+      }
     }
 
     if (photos.length === 0) {
-      console.error(
-        `No photos found for the last ${rover === "Curiosity" ? 60 : 7} days.`
-      );
+      console.error(`Exhausted all attempts to find photos for ${normalizedRover}`);
       return [];
     }
 
-    console.log(`Returning ${photos.length} photos for rover ${rover}`);
-    return photos.slice(0, 50); // Return the 50 most recent photos
+    return photos.slice(0, 50);
   } catch (error) {
-    console.error(`Error in getRoverData for rover ${rover}:`, error);
+    console.error(`Critical error in getRoverData:`, error);
     throw error;
   }
 }
